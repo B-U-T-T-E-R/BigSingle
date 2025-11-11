@@ -13,11 +13,11 @@ namespace BigSingle.BigSingleLibrary
         public static implicit operator BigFloat(int value) => new(value);
         public static implicit operator BigFloat(long value) => new(value);
         public static implicit operator BigFloat(Int128 value) => new(value);
-        public static explicit operator sbyte(BigFloat bigFloat) => Clamp(bigFloat, sbyte.MinValue, sbyte.MaxValue);
+        /*public static explicit operator sbyte(BigFloat bigFloat) => Clamp(bigFloat, sbyte.MinValue, sbyte.MaxValue);
         public static explicit operator short(BigFloat bigFloat) => Clamp(bigFloat, short.MinValue, short.MaxValue);
         public static explicit operator int(BigFloat bigFloat) => Clamp(bigFloat, int.MinValue, int.MaxValue);
         public static explicit operator long(BigFloat bigFloat) => Clamp(bigFloat, long.MinValue, long.MaxValue);
-        public static explicit operator Int128(BigFloat bigFloat) => Clamp(bigFloat, Int128.MinValue, Int128.MaxValue);
+        public static explicit operator Int128(BigFloat bigFloat) => Clamp(bigFloat, Int128.MinValue, Int128.MaxValue);*/
 
         //Целочисленные беззнаковые типы данных
         public static implicit operator BigFloat(byte value) => new(value);
@@ -25,19 +25,19 @@ namespace BigSingle.BigSingleLibrary
         public static implicit operator BigFloat(uint value) => new(value);
         public static implicit operator BigFloat(ulong value) => new(value);
         public static implicit operator BigFloat(UInt128 value) => new(value);
-        public static explicit operator byte(BigFloat bigFloat) => Clamp(bigFloat, byte.MinValue, byte.MaxValue);
+        /*public static explicit operator byte(BigFloat bigFloat) => Clamp(bigFloat, byte.MinValue, byte.MaxValue);
         public static explicit operator ushort(BigFloat bigFloat) => Clamp(bigFloat, ushort.MinValue, ushort.MaxValue);
         public static explicit operator uint(BigFloat bigFloat) => Clamp(bigFloat, uint.MinValue, uint.MaxValue);
         public static explicit operator ulong(BigFloat bigFloat) => Clamp(bigFloat, ulong.MinValue, ulong.MaxValue);
-        public static explicit operator UInt128(BigFloat bigFloat) => Clamp(bigFloat, UInt128.MinValue, UInt128.MaxValue);
+        public static explicit operator UInt128(BigFloat bigFloat) => Clamp(bigFloat, UInt128.MinValue, UInt128.MaxValue);*/
 
         //Числа с плавающей точкой
         public static implicit operator BigFloat(float value) => new(value);
         public static implicit operator BigFloat(double value) => new(value);
         public static implicit operator BigFloat(decimal value) => new(value);
-        public static explicit operator float(BigFloat bigFloat) => Clamp(bigFloat, float.MinValue, float.MaxValue);
+        /*public static explicit operator float(BigFloat bigFloat) => Clamp(bigFloat, float.MinValue, float.MaxValue);
         public static explicit operator double(BigFloat bigFloat) => Clamp(bigFloat, double.MinValue, double.MaxValue);
-        public static explicit operator decimal(BigFloat bigFloat) => Clamp(bigFloat, decimal.MinValue, decimal.MaxValue);
+        public static explicit operator decimal(BigFloat bigFloat) => Clamp(bigFloat, decimal.MinValue, decimal.MaxValue);*/
 
         //Общие приведения типов
         public static implicit operator BigFloat(string value) => new(value);
@@ -46,101 +46,89 @@ namespace BigSingle.BigSingleLibrary
 
         //Конструкторы класса
         //Целочисленные знаковые типы данных
-        public BigFloat(sbyte value) => InitializeFormInteger(value);
-        public BigFloat(short value) => InitializeFormInteger(value);
-        public BigFloat(int value) => InitializeFormInteger(value);
-        public BigFloat(long value) => InitializeFormInteger(value);
-        public BigFloat(Int128 value) => InitializeFormInteger(value);
+        public BigFloat(sbyte value) => InitializeFromInteger(value);
+        public BigFloat(short value) => InitializeFromInteger(value);
+        public BigFloat(int value) => InitializeFromInteger(value);
+        public BigFloat(long value) => InitializeFromInteger(value);
+        public BigFloat(Int128 value) => InitializeFromInteger(value);
 
         //Целочисленные беззнаковые типы данных
-        public BigFloat(byte value) => InitializeFormInteger(value);
-        public BigFloat(ushort value) => InitializeFormInteger(value);
-        public BigFloat(uint value) => InitializeFormInteger(value);
-        public BigFloat(ulong value) => InitializeFormInteger(value);
-        public BigFloat(UInt128 value) => InitializeFormInteger(value);
+        public BigFloat(byte value) => InitializeFromInteger(value);
+        public BigFloat(ushort value) => InitializeFromInteger(value);
+        public BigFloat(uint value) => InitializeFromInteger(value);
+        public BigFloat(ulong value) => InitializeFromInteger(value);
+        public BigFloat(UInt128 value) => InitializeFromInteger(value);
 
 
         //Числа с плавающей точкой
         public BigFloat(float value)
         {
-
-            var valueStr = Convert.ToDecimal(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
-            var partsNum = valueStr.Split(',', '.');
-            IntegerPart = BigInteger.Parse(partsNum[0]);
-            FractionalPart = new StringBuilder(partsNum[1]);
-            Sign = value < 0;
+            string valueStr = Convert.ToDecimal(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            string[] partsNum = valueStr.Split(',', '.');
+            this.value = EncodeDPD(partsNum[0] + partsNum[1]);
+            scale = partsNum[1].Length;
         }
         public BigFloat(double value)
         {
-            int valIntPart = (int)value;
-            int valFracPart = int.Parse(value.ToString()[(valIntPart.ToString().Length + 1)..]);
+            string valueStr = Convert.ToDecimal(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            string[] partsNum = valueStr.Split(',', '.');
 
-            FractionalPart2 = Parse(valFracPart);
+            string intPart = partsNum[0];
+            string fracPart = partsNum.Length > 1 ? partsNum[1] : "";
+
+            this.value = EncodeDPD(intPart + fracPart);
+            scale = fracPart.Length;
         }
         public BigFloat(decimal value)
         {
             var valueStr = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
             var partsNum = valueStr.Split(',', '.');
-            IntegerPart = BigInteger.Parse(partsNum[0]);
-            FractionalPart = new StringBuilder(partsNum[1]);
-            Sign = value < 0;
+            this.value = EncodeDPD(partsNum[0] + partsNum[1]);
+            scale = partsNum[1].Length;
         }
 
         //Общий конструктор
         public BigFloat(string value)
         {
-            var valueStr = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            if(String.IsNullOrWhiteSpace(value))
+                throw new ArgumentNullException("Value is null or empty");
 
-            if (value.Contains('-'))
+            int dotPosition = value.IndexOfAny([',', '.']);
+
+
+            string intValue;
+            string fracValue;
+
+            if(dotPosition > 0)
             {
-                Sign = true;
-                valueStr = valueStr.Replace("-", "");
+                intValue = value.Substring(0, value.IndexOfAny([',', '.']));
+                fracValue = value.Substring(value.IndexOfAny([',', '.']) + 1);
             }
-
-            if (!valueStr.Contains('.') && !valueStr.Contains(','))
-            {
-                IntegerPart = BigInteger.Parse(valueStr);
-                FractionalPart = new StringBuilder('0');
-                return;
-            }
-
-
-
-            var splitNum = valueStr.Split('.', ',');
-
-            if (splitNum[0].Length < 1)
-                IntegerPart = 0;
             else
-                IntegerPart = BigInteger.Parse(splitNum[0]);
+            {
+                intValue = value;
+                fracValue = "0";
+            }
 
-
-            FractionalPart = new StringBuilder(splitNum[1]);
+            this.value = EncodeDPD(intValue + fracValue);
+            this.scale = fracValue.Length;
         }
 
         public BigFloat()
         {
-            IntegerPart = BigInteger.Zero;
-            FractionalPart = new StringBuilder("0");
-            Sign = false;
+            value = new BitArray(21, false);
         }
 
         //Дополнительные функции для приведения целочисленных типов
-        private void InitializeFormInteger(BigInteger value)
-        {
-            IntegerPart = value;
-            FractionalPart = new StringBuilder("0");
-            Sign = value < 0;
-        }
-
         private void InitializeFromInteger(BigInteger value)
         {
-            IntegerPart = BigInteger.Abs(value);
-            FractionalPart2 = new BitArray(8, false);
-            FractionalPart2.Set(4, value < 0);
+            this.value = new BitArray(11, false);
+            this.value = EncodeDPD(value.ToString());
+            this.value.Set(0, value < 0);
         }
 
         //Метод для ограничивания BigFloat для привидения типа
-        private static T Clamp<T>(BigFloat value, T min, T max) where T : struct, IComparable
+        /*private static T Clamp<T>(BigFloat value, T min, T max) where T : struct, IComparable
         {
             //Получаем тип приведения
             Type typeOfT = typeof(T);
@@ -170,13 +158,13 @@ namespace BigSingle.BigSingleLibrary
 
             //Приведение типов для чисел с плавающей и фиксированных точек
             if (typeOfT == typeof(float))
-                return (T)(object)float.Parse((value.Sign ? "-" : "") + value.ToString());
+                return (T)(object)float.Parse((value.value[0] ? "-" : "") + value.ToString());
             if (typeOfT == typeof(double))
-                return (T)(object)double.Parse((value.Sign ? "-" : "") + value.ToString());
+                return (T)(object)double.Parse((value.value[0] ? "-" : "") + value.ToString());
             if (typeOfT == typeof(decimal))
-                return (T)(object)decimal.Parse((value.Sign ? "-" : "") + value.ToString());
+                return (T)(object)decimal.Parse((value.value[0] ? "-" : "") + value.ToString());
             if (typeOfT == typeof(Int128))
-                return (T)(object)Int128.Parse((value.Sign ? "-" : "") + value.IntegerPart.ToString());
+                return (T)(object)Int128.Parse((value.value[0] ? "-" : "") + value.IntegerPart.ToString());
             if (typeOfT == typeof(UInt128))
                 return (T)(object)UInt128.Parse(value.IntegerPart.ToString());
 
@@ -184,48 +172,246 @@ namespace BigSingle.BigSingleLibrary
 
 
             return (T)Convert.ChangeType(a, typeOfT);
-        }
+        }*/
 
-        private BitArray Parse(int value)
+        private BitArray EncodeDPD(string value)
         {
-            string num = "";
-            bool[] bools = new bool[value.ToString().Length * 4 + 4];
+            int len = (value.Length % 3) - 1;
+            value = new string('0', len) + value;
+            BitArray rez = new(10 * (value.Length / 3) + 1, false);
 
-            while (value > 0)
+            string[] n = new string[value.Length / 3];
+
+            for(int i = 0, j = 0; i < value.Length; i += 3, j++)
             {
-                num += (value % 10).ToString("B4");
-                value /= 10;
+                n[j] += value[i];
+                n[j] += value[i + 1];
+                n[j] += value[i + 2];
             }
 
-            StringBuilder numBCD = new ();
-
-            for(int i = 0; i < num.Length; i += 4)
+            for (int j = 0; j < n.Length; j++)
             {
-                numBCD.Insert(0, num[i..(i + 4)]);
-            }
+                bool[] flags = new bool[3];
 
-            
-
-            for(int i = 0; i < numBCD.Length; i++)
-            {
-                bools[i + 4] = numBCD[i] - '0' != 0;
-            }
-
-            BitArray bits = new (bools);
-
-            return bits;
-        }
-
-        private void ShowBitArr(BitArray bitArr)
-        {
-            for(int i = 0; i < bitArr.Length / 4; i++)
-            {
-                for(int j = i * 4; j < i * 4 + 4; j++)
+                for (int i = 0; i < n.Length; i++)
                 {
-                    Console.Write(bitArr[j] ? 1 : 0);
+                    flags[i] = false;
+                    if ((n[j][i] - '0') >= 8)
+                        flags[i] = true;
                 }
-                Console.Write(" ");
+
+                if (!flags[0])
+                {
+                    if (!flags[1])
+                    {
+                        if (!flags[2])
+                        {
+                            rez.Set(0 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[1] == '1');
+                            rez.Set(1 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[2] == '1');
+                            rez.Set(2 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[3] == '1');
+                            rez.Set(3 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[1] == '1');
+                            rez.Set(4 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[2] == '1');
+                            rez.Set(5 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[3] == '1');
+                            rez.Set(6 + 10 * j + 1, false);
+                            rez.Set(7 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[1] == '1');
+                            rez.Set(8 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[2] == '1');
+                            rez.Set(9 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[3] == '1');
+                        }                
+                        else             
+                        {                
+                            rez.Set(0 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[1] == '1');
+                            rez.Set(1 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[2] == '1');
+                            rez.Set(2 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[3] == '1');
+                            rez.Set(3 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[1] == '1');
+                            rez.Set(4 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[2] == '1');
+                            rez.Set(5 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[3] == '1');
+                            rez.Set(6 + 10 * j + 1, true);
+                            rez.Set(7 + 10 * j + 1, false);
+                            rez.Set(8 + 10 * j + 1, false);
+                            rez.Set(9 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[3] == '1');
+                        }
+                    }
+                    else
+                    {
+                        if (!flags[2])
+                        {
+                            rez.Set(0 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[1] == '1');
+                            rez.Set(1 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[2] == '1');
+                            rez.Set(2 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[3] == '1');
+                            rez.Set(3 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[1] == '1');
+                            rez.Set(4 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[2] == '1');
+                            rez.Set(5 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[3] == '1');
+                            rez.Set(6 + 10 * j + 1, true);
+                            rez.Set(7 + 10 * j + 1, false);
+                            rez.Set(8 + 10 * j + 1, true);
+                            rez.Set(9 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[3] == '1');
+                        }
+                        else
+                        {
+                            rez.Set(0 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[1] == '1');
+                            rez.Set(1 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[2] == '1');
+                            rez.Set(2 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[3] == '1');
+                            rez.Set(3 + 10 * j + 1, true);
+                            rez.Set(4 + 10 * j + 1, false);
+                            rez.Set(5 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[3] == '1');
+                            rez.Set(6 + 10 * j + 1, true);
+                            rez.Set(7 + 10 * j + 1, true);
+                            rez.Set(8 + 10 * j + 1, true);
+                            rez.Set(9 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[3] == '1');
+                        }
+                    }
+                }
+                else
+                {
+                    if (!flags[1])
+                    {
+                        if (!flags[2])
+                        {
+                            rez.Set(0 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[1] == '1');
+                            rez.Set(1 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[2] == '1');
+                            rez.Set(2 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[3] == '1');
+                            rez.Set(3 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[1] == '1');
+                            rez.Set(4 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[2] == '1');
+                            rez.Set(5 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[3] == '1');
+                            rez.Set(6 + 10 * j + 1, true);
+                            rez.Set(7 + 10 * j + 1, true);
+                            rez.Set(8 + 10 * j + 1, false);
+                            rez.Set(9 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[3] == '1');
+                        }
+                        else
+                        {
+                            rez.Set(0 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[1] == '1');
+                            rez.Set(1 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[2] == '1');
+                            rez.Set(2 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[3] == '1');
+                            rez.Set(3 + 10 * j + 1, false);
+                            rez.Set(4 + 10 * j + 1, true);
+                            rez.Set(5 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[3] == '1');
+                            rez.Set(6 + 10 * j + 1, true);
+                            rez.Set(7 + 10 * j + 1, true);
+                            rez.Set(8 + 10 * j + 1, true);
+                            rez.Set(9 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[3] == '1');
+                        }
+                    }
+                    else
+                    {
+                        if (!flags[2])
+                        {
+                            rez.Set(0 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[1] == '1');
+                            rez.Set(1 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[2] == '1');
+                            rez.Set(2 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[3] == '1');
+                            rez.Set(3 + 10 * j + 1, false);
+                            rez.Set(4 + 10 * j + 1, false);
+                            rez.Set(5 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[3] == '1');
+                            rez.Set(6 + 10 * j + 1, true);
+                            rez.Set(7 + 10 * j + 1, true);
+                            rez.Set(8 + 10 * j + 1, true);
+                            rez.Set(9 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[3] == '1');
+                        }
+                        else
+                        {
+                            rez.Set(0 + 10 * j + 1, false);
+                            rez.Set(1 + 10 * j + 1, false);
+                            rez.Set(2 + 10 * j + 1, (n[j][0] - '0').ToString("B4")[3] == '1');
+                            rez.Set(3 + 10 * j + 1, true);
+                            rez.Set(4 + 10 * j + 1, true);
+                            rez.Set(5 + 10 * j + 1, (n[j][1] - '0').ToString("B4")[3] == '1');
+                            rez.Set(6 + 10 * j + 1, true);
+                            rez.Set(7 + 10 * j + 1, true);
+                            rez.Set(8 + 10 * j + 1, true);
+                            rez.Set(9 + 10 * j + 1, (n[j][2] - '0').ToString("B4")[3] == '1');
+                        }
+                    }
+                }
             }
+
+            return rez;
+        }
+
+        public static string DecodeDPD(BigFloat a)
+        {
+            int correct = 0;
+            if (a.Length % 10 == 1)
+                correct = 1;
+
+            BitArray value = a.value;
+            string rez = String.Empty;
+            
+            for (int j = 0; j < value.Length / 10; j++)
+            {
+                string flags = $"{(value[10 * j + 6 + correct] ? 1 : 0)}{(value[10 * j + 7 + correct] ? 1 : 0)}{(value[10 * j + 8 + correct] ? 1 : 0)}{(value[10 * j + 3 + correct] ? 1 : 0)}{(value[10 * j + 4 + correct] ? 1 : 0)}";
+
+                string r;
+
+
+                if (flags[0] == '0')
+                {
+                    r = ((4 * (value[0 + 10 * j + correct] ? 1 : 0)) + (2 * (value[1 + 10 * j + correct] ? 1 : 0)) + (value[2 + 10 * j + correct] ? 1 : 0)).ToString();
+                    r += ((4 * (value[3 + 10 * j + correct] ? 1 : 0)) + (2 * (value[4 + 10 * j + correct] ? 1 : 0)) + (value[5 + 10 * j + correct] ? 1 : 0)).ToString();
+                    r += ((4 * (value[7 + 10 * j + correct] ? 1 : 0)) + (2 * (value[8 + 10 * j + correct] ? 1 : 0)) + (value[9 + 10 * j + correct] ? 1 : 0)).ToString();
+                }
+                else
+                {
+                    if (flags[..3] == "100")
+                    {
+                        r = ((4 * (value[0 + 10 * j + correct] ? 1 : 0)) + (2 * (value[1 + 10 * j + correct] ? 1 : 0)) + (value[2 + 10 * j + correct] ? 1 : 0)).ToString();
+                        r += ((4 * (value[3 + 10 * j + correct] ? 1 : 0)) + (2 * (value[4 + 10 * j + correct] ? 1 : 0)) + (value[5 + 10 * j + correct] ? 1 : 0)).ToString();
+                        r += (8 + (value[9 + 10 * j + correct] ? 1 : 0)).ToString();
+                    }
+                    else if (flags[..3] == "101")
+                    {
+                        r = ((4 * (value[0 + 10 * j + correct] ? 1 : 0)) + (2 * (value[1 + 10 * j + correct] ? 1 : 0)) + (value[2 + 10 * j + correct] ? 1 : 0)).ToString();
+                        r += (8 + (value[5 + 10 * j + correct] ? 1 : 0));
+                        r += ((4 * (value[3 + 10 * j + correct] ? 1 : 0)) + (2 * (value[4 + 10 * j + correct] ? 1 : 0)) + (value[9 + 10 * j + correct] ? 1 : 0)).ToString();
+                    }
+                    else if (flags[..3] == "110")
+                    {
+                        r = (8 + (value[2 + 10 * j + correct] ? 1 : 0)).ToString();
+                        r += ((4 * (value[3 + 10 * j + correct] ? 1 : 0)) + (2 * (value[4 + 10 * j + correct] ? 1 : 0)) + (value[5 + 10 * j + correct] ? 1 : 0)).ToString();
+                        r += ((4 * (value[0 + 10 * j + correct] ? 1 : 0)) + (2 * (value[1 + 10 * j + correct] ? 1 : 0)) + (value[9 + 10 * j + correct] ? 1 : 0)).ToString();
+                    }
+                    else
+                    {
+                        if (flags[4..] == "00")
+                        {
+                            r = (8 + (value[2 + 10 * j + correct] ? 1 : 0)).ToString();
+                            r += (8 + (value[5 + 10 * j + correct] ? 1 : 0)).ToString();
+                            r += ((4 * (value[0 + 10 * j + correct] ? 1 : 0)) + (2 * (value[1 + 10 * j + correct] ? 1 : 0)) + (value[9 + 10 * j + correct] ? 1 : 0)).ToString();
+                        }
+                        else if (flags[4..] == "01")
+                        {
+                            r = (8 + (value[2 + 10 * j + correct] ? 1 : 0)).ToString();
+                            r += ((4 * (value[0 + 10 * j + correct] ? 1 : 0)) + (2 * (value[1 + 10 * j + correct] ? 1 : 0)) + (value[5 + 10 * j + correct] ? 1 : 0)).ToString();
+                            r += (8 + (value[9 + 10 * j + correct] ? 1 : 0)).ToString();
+                        }
+                        else if (flags[4..] == "10")
+                        {
+                            r = ((4 * (value[0 + 10 * j + correct] ? 1 : 0)) + (2 * (value[1 + 10 * j + correct] ? 1 : 0)) + (value[2 + 10 * j + correct] ? 1 : 0)).ToString();
+                            r += (8 + (value[5 + 10 * j + correct] ? 1 : 0)).ToString();
+                            r += (8 + (value[9 + 10 * j + correct] ? 1 : 0)).ToString();
+                        }
+                        else
+                        {
+                            r = (8 + (value[2 + 10 * j + correct] ? 1 : 0)).ToString();
+                            r += (8 + (value[5 + 10 * j + correct] ? 1 : 0)).ToString();
+                            r += (8 + (value[9 + 10 * j + correct] ? 1 : 0)).ToString();
+                        }
+                    }
+                }
+
+                rez += r;
+            }
+
+            int remZero = 0;
+
+            for (; remZero < a.Length - a.scale; remZero++)
+            {
+                if (rez[remZero] != '0')
+                {
+                    break;
+                }
+            }
+
+            return rez[remZero..];
         }
     }
 }
