@@ -177,23 +177,25 @@ namespace BigSingle.BigSingleLibrary
         private BitArray EncodeDPD(string value)
         {
             int len = (value.Length % 3) - 1;
+            len += (len < 0 ? int.Abs(len) : 0);
+
             value = new string('0', len) + value;
             BitArray rez = new(10 * (value.Length / 3) + 1, false);
 
             string[] n = new string[value.Length / 3];
 
-            for(int i = 0, j = 0; i < value.Length; i += 3, j++)
+            for(int i = 0, j = 0; i < value.Length / 3; i++, j++)
             {
-                n[j] += value[i];
-                n[j] += value[i + 1];
-                n[j] += value[i + 2];
+                n[j] += value[3 * i];
+                n[j] += value[3 * i + 1];
+                n[j] += value[3 * i + 2];
             }
 
             for (int j = 0; j < n.Length; j++)
             {
                 bool[] flags = new bool[3];
 
-                for (int i = 0; i < n.Length; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     flags[i] = false;
                     if ((n[j][i] - '0') >= 8)
@@ -327,8 +329,9 @@ namespace BigSingle.BigSingleLibrary
             return rez;
         }
 
-        public static string DecodeDPD(BigFloat a)
+        public string DecodeDPD()
         {
+            BigFloat a = this;
             int correct = 0;
             if (a.Length % 10 == 1)
                 correct = 1;

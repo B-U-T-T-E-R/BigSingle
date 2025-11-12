@@ -8,6 +8,7 @@ namespace BigSingle.BigSingleLibrary
     {
         public BitArray value = new (1, false);
         public int scale = 0;
+        public int Accuracy = 32;
 
         public static readonly BigFloat Zero = new (0.0);
         public static readonly BigFloat One = new (1.0);
@@ -37,9 +38,12 @@ namespace BigSingle.BigSingleLibrary
         }
         public override string ToString()
         {
-            string num = DecodeDPD(this);
+            string num = DecodeDPD();
             string integerPart = num.Substring(0, num.Length - scale);
             string fracPart = num.Substring(num.Length - scale);
+
+            if (scale > Accuracy)
+                fracPart = fracPart[..Accuracy];
 
             return $"{integerPart},{fracPart}";
         }
