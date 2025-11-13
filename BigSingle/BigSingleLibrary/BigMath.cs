@@ -13,13 +13,42 @@ namespace BigSingle.BigSingleLibrary
 
         public static BigFloat Abs(BigFloat a)
         {
-            a.value.Set(0, false);
+            a.mDPD.Set(0, false);
             return a;
         }
         //public static BigFloat Ceiling(BigFloat a) => new($"{(a.value[0] ? a.IntegerPart : a.IntegerPart + 1)},{0}");
-        /*public static BigFloat Max(BigFloat left, BigFloat right) => left < right ? right : left;
+        public static BigFloat Max(BigFloat left, BigFloat right) => left < right ? right : left;
         public static BigFloat Min(BigFloat left, BigFloat right) => left < right ? left : right;
-        public static int Sign(BigFloat value) => value < 0 ? -1 : value == 0 ? 0 : 1;
-        public static BigFloat Truncate(BigFloat value) => $"{value.ToString()[..(value.scale + 1)]},{0}";*/
+        public static int Sign(BigFloat value) => value.mDPD[0] ? 0 : 1;
+        public static BigFloat Truncate(BigFloat value) => $"{value.ToString().Substring(0, value.ToString().IndexOf(','))},{0}";
+        public static BigFloat Pow(BigFloat value, int y)
+        {
+            bool isMinus = y < 0;
+            y = int.Abs(y);
+            if (y == 0)
+                return value;
+
+            BigFloat result = "1";
+            BigFloat tempBase = value;
+
+            while (y > 0)
+            {
+                if((y & 1) == 1)
+                {
+                    result *= tempBase;
+                }
+
+                tempBase *= tempBase;
+
+                y >>= 1;
+            }
+
+            if(isMinus)
+            {
+                return 1 / result;
+            }
+
+            return result;
+        }
     }
 }

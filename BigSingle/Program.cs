@@ -6,13 +6,11 @@ namespace BigSingle
     {
         static void Main()
         {
-            BigFloat a = "3.14";
-            BigFloat b = "2.1";
+            BigFloat a = "3,14";
 
-            Console.WriteLine(a / b);
+            BigFloat b = BigMath.Pow(a, 2);
 
-            //1,49523889523889523889523889523889
-            //1,4952380952380952380952380952381
+            Console.WriteLine(b);
         }
     }
 }

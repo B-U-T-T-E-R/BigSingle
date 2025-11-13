@@ -1,21 +1,44 @@
 ﻿using System.Collections;
-using System.Numerics;
-using System.Text;
 
 namespace BigSingle.BigSingleLibrary
 {
     public partial class BigFloat
     {
-        public BitArray value = new (1, false);
+        public BitArray mDPD = new (1, false);
         public int scale = 0;
-        public int Accuracy = 32;
+        public int Accuracy = (int.MaxValue / 6760) - 1;
+        private int _accuracy;
+
+        public int Scale
+        {
+            get
+            {
+                return _accuracy;
+            }
+
+            set
+            {
+                if (value < 0)
+                {
+                    throw new ArgumentException("The scale cannot be negative.");
+                }
+                else if (value > (int.MaxValue / 6000 - 1))
+                {
+                    _accuracy = int.MaxValue / 6000 - 1;
+                }
+                else
+                {
+                    _accuracy = value;
+                }
+            }
+        }
 
         public static readonly BigFloat Zero = new (0.0);
         public static readonly BigFloat One = new (1.0);
-        public int Length => value.Length;
-        public int LengthDPD => value.Length / 3;
+        public int Length => mDPD.Length;
+        public int LengthDPD => mDPD.Length / 3;
         public int LengthFractionalPart => scale;
-        public int LengthIntegerPart => value.Length / 3 - scale;
+        public int LengthIntegerPart => mDPD.Length / 3 - scale;
 
         public override bool Equals(object? obj)
         {
@@ -39,13 +62,18 @@ namespace BigSingle.BigSingleLibrary
         public override string ToString()
         {
             string num = DecodeDPD();
-            string integerPart = num.Substring(0, num.Length - scale);
-            string fracPart = num.Substring(num.Length - scale);
 
-            if (scale > Accuracy)
-                fracPart = fracPart[..Accuracy];
+            if(scale > num.Length)
+            {
+                return $"{(mDPD[0] ? "-" : "")}{0},{new string('0', scale - num.Length) + num}";
+            }
 
-            return $"{integerPart},{fracPart}";
+            string integerPart = num[..(num.Length - scale)];
+            string fracPart = num[(num.Length - scale)..];
+
+
+
+            return $"{(mDPD[0] ? "-" : "")}{integerPart},{fracPart}";
         }
     }
 }
