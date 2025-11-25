@@ -4,183 +4,19 @@ namespace BigSingle.BigSingleLibrary
 {
     public partial class BigFloat
     {
-        public static bool operator ==(BigFloat left, BigFloat right)
-        {
-            BigInteger leftNum = BigInteger.Parse(left.DecodeDPD());
-            BigInteger rightNum = BigInteger.Parse(right.DecodeDPD());
-
-            int minScale = int.Min(left.scale, right.scale);
-            int maxScale = int.Max(left.scale, right.scale);
-
-            if (left.Scale < right.Scale)
-            {
-                leftNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-            else if (left.Scale > right.Scale)
-            {
-                rightNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-
-            return leftNum == rightNum;
-        }
+        public static bool operator ==(BigFloat left, BigFloat right) => left.value == right.value && left.scale == right.scale;
         public static bool operator !=(BigFloat left, BigFloat right)
         {
             return !(left == right);
         }
         public static bool operator <=(BigFloat left, BigFloat right) => left < right || left == right;
         public static bool operator >=(BigFloat left, BigFloat right) => left > right || left == right;
-        public static bool operator <(BigFloat left, BigFloat right)
-        {
-            BigInteger leftNum = BigInteger.Parse(left.DecodeDPD());
-            BigInteger rightNum = BigInteger.Parse(right.DecodeDPD());
-
-            int minScale = int.Min(left.scale, right.scale);
-            int maxScale = int.Max(left.scale, right.scale);
-
-            if(left.Scale < right.Scale)
-            {
-                leftNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-            else if (left.Scale > right.Scale)
-            {
-                rightNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-
-            return leftNum < rightNum;
-        }
-        public static bool operator >(BigFloat left, BigFloat right)
-        {
-            BigInteger leftNum = BigInteger.Parse(left.DecodeDPD());
-            BigInteger rightNum = BigInteger.Parse(right.DecodeDPD());
-
-            int minScale = int.Min(left.scale, right.scale);
-            int maxScale = int.Max(left.scale, right.scale);
-
-            if (left.Scale < right.Scale)
-            {
-                leftNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-            else if (left.Scale > right.Scale)
-            {
-                rightNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-
-            return leftNum > rightNum;
-        }
+        public static bool operator <(BigFloat left, BigFloat right) => left.value < right.value && left.scale <= right.scale;
+        public static bool operator >(BigFloat left, BigFloat right) => left.value > right.value && left.scale >= right.scale;
         public static BigFloat operator +(BigFloat left, BigFloat right)
         {
-            BigInteger leftNum = BigInteger.Parse(left.DecodeDPD());
-            BigInteger rightNum = BigInteger.Parse(right.DecodeDPD());
-
-            if (left.mDPD[0] == true)
-                leftNum *= -1;
-            if (right.mDPD[0] == true)
-                rightNum *= -1;
-
-            int minScale = int.Min(left.scale, right.scale);
-            int maxScale = int.Max(left.scale, right.scale);
-
-            if (left.Scale < right.Scale)
-            {
-                leftNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-            else if (left.Scale > right.Scale)
-            {
-                rightNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-
-            leftNum += rightNum;
-
-            string result = leftNum.ToString();
-
-            string intPart = result.Length <= maxScale ? "0" : result.Substring(0, result.Length - maxScale);
-            string fracPart = result.Length <= maxScale ? result.Substring(0) : result.Substring(result.Length - maxScale);
-
-            return new BigFloat($"{(result[0] == '-' ? "-" : "")}{intPart},{fracPart}");
-        }
-        public static BigFloat operator -(BigFloat left, BigFloat right)
-        {
-            BigInteger leftNum = BigInteger.Parse(left.DecodeDPD());
-            BigInteger rightNum = BigInteger.Parse(right.DecodeDPD());
-
-            if (left.mDPD[0] == true)
-                leftNum *= -1;
-            if (right.mDPD[0] == true)
-                rightNum *= -1;
-
-            int minScale = int.Min(left.scale, right.scale);
-            int maxScale = int.Max(left.scale, right.scale);
-
-            if (left.Scale < right.Scale)
-            {
-                leftNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-            else if (left.Scale > right.Scale)
-            {
-                rightNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-
-            leftNum -= rightNum;
-
-            string result = leftNum.ToString();
-
-            return new BigFloat($"{(result[0] == '-' ? "-" : "")}{result.Substring(0, result.Length - maxScale)},{result.Substring(result.Length - maxScale)}");
-        }
-        public static BigFloat operator *(BigFloat left, BigFloat right)
-        {
-            BigInteger leftNum = BigInteger.Parse(left.DecodeDPD());
-            BigInteger rightNum = BigInteger.Parse(right.DecodeDPD());
-
-            if (left.mDPD[0] == true)
-                leftNum *= -1;
-            if (right.mDPD[0] == true)
-                rightNum *= -1;
-
-            int minScale = int.Min(left.scale, right.scale);
-            int maxScale = int.Max(left.scale, right.scale);
-
-            if (left.Scale < right.Scale)
-            {
-                leftNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-            else if (left.Scale > right.Scale)
-            {
-                rightNum *= BigInteger.Pow(10, maxScale - minScale);
-            }
-
-            leftNum *= rightNum;
-
-            string result = leftNum.ToString();
-
-            return new BigFloat($"{(result[0] == '-' ? "-" : "")}{result.Substring(0, result.Length - (maxScale + minScale))},{result.Substring(result.Length - (maxScale + minScale))}");
-        }
-        public static BigFloat operator *(BigFloat left, int right)
-        {
-            BigInteger leftNum = BigInteger.Parse(left.DecodeDPD());
-            BigInteger rightNum = BigInteger.Parse(right.ToString());
-
-            if (left.mDPD[0] == true)
-                leftNum *= -1;
-
-            int maxScale = left.scale;
-
-            leftNum *= rightNum;
-
-            string result = leftNum.ToString();
-
-            return new BigFloat($"{(result[0] == '-' ? "-" : "")}{result.Substring(0, result.Length - (maxScale))},{result.Substring(result.Length - (maxScale))}");
-        }
-        public static BigFloat operator /(BigFloat left, BigFloat right)
-        {
-            BigInteger leftNum = BigInteger.Parse(left.DecodeDPD());
-            BigInteger rightNum = BigInteger.Parse(right.DecodeDPD());
-
-            if (left.mDPD[0] == true)
-                leftNum *= -1;
-            if (right.mDPD[0] == true)
-                rightNum *= -1;
-
-            int overallAccuracy = left.Accuracy < right.Accuracy ? right.Accuracy : left.Accuracy;
+            BigInteger leftNum = left.value;
+            BigInteger rightNum = right.value;
 
             int minScale = int.Min(left.scale, right.scale);
             int maxScale = int.Max(left.scale, right.scale);
@@ -194,52 +30,126 @@ namespace BigSingle.BigSingleLibrary
                 rightNum *= BigInteger.Pow(10, maxScale - minScale);
             }
 
-            BigInteger correct = leftNum / rightNum;
+            leftNum += rightNum;
 
-            leftNum *= BigInteger.Pow(10, overallAccuracy);
 
-            correct *= BigInteger.Pow(10, overallAccuracy);
-
-            leftNum /= rightNum;
-
-            int lenZero = right.DecodeDPD().Length - left.DecodeDPD().Length;
-
-            string fracRez = new string('0', lenZero < 0 ? 0 : lenZero) + (BigInteger.Abs(leftNum) - BigInteger.Abs(correct)).ToString();
-
-            string intRez = correct.ToString();
-
-            int index = 0;
-
-            for (int i = 0; i < intRez.Length; i++)
+            string result = leftNum.ToString();
+            bool isNegative = false;
+            if (result[0] == '-')
             {
-                if (intRez[i] != '0')
-                    index = i;
+                isNegative = true;
+                result = result.Substring(1);
             }
 
-            intRez = intRez[..(index + 1)];
-
-            string result = $"{(leftNum < 0 ? "-" : "")}{intRez},{fracRez}";
-
-            int rightRemoveZero = result.Length - 1;
-            for (; rightRemoveZero >= result.IndexOf(','); rightRemoveZero--)
+            while (result.Length <= maxScale)
             {
-                if (result[rightRemoveZero] != '0')
-                    break;
-                else if (result[rightRemoveZero] == ',')
-                {
-                    rightRemoveZero = result.Length - 1;
-                    break;
-                }
+                result = "0" + result;
             }
 
-            int leftRemoveZero = 0;
-            for (; leftRemoveZero < result.IndexOf(',') - 1; leftRemoveZero++)
+            string intPart = result.Substring(0, result.Length - maxScale);
+            string fracPart = result.Substring(result.Length - maxScale);
+
+            return new BigFloat($"{(isNegative ? "-" : "")}{intPart},{fracPart}");
+        }
+        public static BigFloat operator -(BigFloat left, BigFloat right)
+        {
+            BigInteger leftNum = left.value;
+            BigInteger rightNum = right.value;
+
+            int minScale = int.Min(left.scale, right.scale);
+            int maxScale = int.Max(left.scale, right.scale);
+
+            if (left.scale < right.scale)
             {
-                if (result[rightRemoveZero] != '0')
-                    break;
+                leftNum *= BigInteger.Pow(10, maxScale - minScale);
+            }
+            else if (left.scale > right.scale)
+            {
+                rightNum *= BigInteger.Pow(10, maxScale - minScale);
             }
 
-            return new BigFloat($"{((left.mDPD[0] || right.mDPD[0]) ? "-" : "")}{intRez},{fracRez}");
+            leftNum -= rightNum;
+
+
+            string result = leftNum.ToString();
+            bool isNegative = false;
+            if (result[0] == '-')
+            {
+                isNegative = true;
+                result = result.Substring(1);
+            }
+
+            while (result.Length <= maxScale)
+            {
+                result = "0" + result;
+            }
+
+            string intPart = result.Substring(0, result.Length - maxScale);
+            string fracPart = result.Substring(result.Length - maxScale);
+
+            return new BigFloat($"{(isNegative ? "-" : "")}{intPart},{fracPart}");
+        }
+        public static BigFloat operator *(BigFloat left, BigFloat right)
+        {
+            BigInteger leftNum = left.value;
+            BigInteger rightNum = right.value;
+
+            BigInteger result = leftNum * rightNum;
+
+            int newscale = left.scale + right.scale;
+
+            string resultStr = result.ToString();
+            bool isNegative = false;
+            if (resultStr[0] == '-')
+            {
+                isNegative = true;
+                resultStr = resultStr.Substring(1);
+            }
+
+            while(resultStr.Length <= newscale)
+            {
+                resultStr = "0" + resultStr;
+            }
+
+            string finalStr = resultStr.Insert(resultStr.Length - newscale, ",");
+
+            return new BigFloat($"{(isNegative ? "-" : "")}{finalStr}");
+        }
+        public static BigFloat operator /(BigFloat left, BigFloat right)
+        {
+            BigInteger leftNum = left.value;
+            BigInteger rightNum = right.value;
+
+            if (rightNum == 0)
+            {
+                throw new DivideByZeroException();
+            }
+
+            int precision = Math.Max(left.Accuracy, right.Accuracy);
+
+            leftNum *= BigInteger.Pow(10, precision + right.scale);
+
+            BigInteger resultNum = leftNum / rightNum;
+
+            int newScale = left.scale + precision;
+
+            if (newScale < 0)
+            {
+                resultNum *= BigInteger.Pow(10, Math.Abs(newScale));
+                newScale = 0; 
+            }
+
+            string resultStr = resultNum.ToString();
+
+            while (resultStr.Length <= newScale)
+            {
+                resultStr = "0" + resultStr;
+            }
+
+            string finalStr = resultStr.Insert(resultStr.Length - newScale, ",");
+            finalStr = finalStr.TrimEnd('0');
+
+            return new BigFloat((resultStr[0] == '-' ? "-" : "") + finalStr);
         }
     }
 }

@@ -1,15 +1,23 @@
 ﻿using System.Collections;
+using System.Numerics;
 
 namespace BigSingle.BigSingleLibrary
 {
+    public enum BigFloatState
+    {
+        Finite,
+        PositiveInfinity,
+        NegativeInfinity,
+        NaN
+    }
     public partial class BigFloat
     {
-        public BitArray mDPD = new (1, false);
+        public BigInteger value = 0;
         public int scale = 0;
-        public int Accuracy = (int.MaxValue / 6760) - 1;
-        private int _accuracy;
+        private int _accuracy = 32;
+        private BigFloatState _state = BigFloatState.Finite;
 
-        public int Scale
+        public int Accuracy
         {
             get
             {
@@ -18,27 +26,18 @@ namespace BigSingle.BigSingleLibrary
 
             set
             {
-                if (value < 0)
-                {
-                    throw new ArgumentException("The scale cannot be negative.");
-                }
-                else if (value > (int.MaxValue / 6000 - 1))
-                {
-                    _accuracy = int.MaxValue / 6000 - 1;
-                }
-                else
-                {
+                if (value >= 0)
                     _accuracy = value;
-                }
+                else if (value < 0)
+                    throw new Exception("Precision cannot be negative");
             }
         }
 
-        public static readonly BigFloat Zero = new (0.0);
-        public static readonly BigFloat One = new (1.0);
-        public int Length => mDPD.Length;
-        public int LengthDPD => mDPD.Length / 3;
+        public static readonly BigFloat Zero = new ("0");
+        public static readonly BigFloat One = new ("1");
+        public int Length => value.ToString().Length;
         public int LengthFractionalPart => scale;
-        public int LengthIntegerPart => mDPD.Length / 3 - scale;
+        public int LengthIntegerPart => value.ToString().Length - scale < 0 ? 0 : value.ToString().Length - scale;
 
         public override bool Equals(object? obj)
         {
@@ -61,19 +60,39 @@ namespace BigSingle.BigSingleLibrary
         }
         public override string ToString()
         {
-            string num = DecodeDPD();
-
-            if(scale > num.Length)
+            switch (_state)
             {
-                return $"{(mDPD[0] ? "-" : "")}{0},{new string('0', scale - num.Length) + num}";
+                case BigFloatState.NaN:
+                    return "NaN";
+                case BigFloatState.PositiveInfinity:
+                    return "Infinity";
+                case BigFloatState.NegativeInfinity:
+                    return "-Infinity";
             }
 
-            string integerPart = num[..(num.Length - scale)];
-            string fracPart = num[(num.Length - scale)..];
+            string intPart = value.ToString()[..LengthIntegerPart];
+            string fracPart = value.ToString()[LengthIntegerPart..];
 
+            if (intPart.Length == 0)
+                intPart = "0";
 
+            int scaleZero = scale - fracPart.Length;
 
-            return $"{(mDPD[0] ? "-" : "")}{integerPart},{fracPart}";
+            scaleZero = scaleZero < 0 ? 0 : scaleZero;
+
+            fracPart = new string('0', scaleZero) + fracPart;
+
+            if(fracPart.Length == 0)
+                fracPart = "0";
+
+            fracPart = fracPart.TrimEnd('0');
+
+            if (value == 0)
+                return "0";
+            if (fracPart == "")
+                return intPart;
+
+            return $"{intPart},{fracPart}";
         }
     }
 }

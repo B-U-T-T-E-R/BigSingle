@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Numerics;
 
 namespace BigSingle.BigSingleLibrary
 {
@@ -63,7 +64,7 @@ namespace BigSingle.BigSingleLibrary
         {
             string valueStr = Convert.ToDecimal(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
             string[] partsNum = valueStr.Split(',', '.');
-            this.mDPD = EncodeDPD(partsNum[0] + partsNum[1]);
+            this.value = BigInteger.Parse(partsNum[0] + partsNum[1]) * (value < 0 ? -1 : 1);
             scale = partsNum[1].Length;
         }
         public BigFloat(double value)
@@ -71,17 +72,14 @@ namespace BigSingle.BigSingleLibrary
             string valueStr = Convert.ToDecimal(value).ToString(System.Globalization.CultureInfo.InvariantCulture);
             string[] partsNum = valueStr.Split(',', '.');
 
-            string intPart = partsNum[0];
-            string fracPart = partsNum.Length > 1 ? partsNum[1] : "";
-
-            this.mDPD = EncodeDPD(intPart + fracPart);
-            scale = fracPart.Length;
+            this.value = BigInteger.Parse(partsNum[0] + partsNum[1]) * (value < 0 ? -1 : 1);
+            scale = partsNum[1].Length;
         }
         public BigFloat(decimal value)
         {
             var valueStr = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
             var partsNum = valueStr.Split(',', '.');
-            this.mDPD = EncodeDPD(partsNum[0] + partsNum[1]);
+            this.value = BigInteger.Parse(partsNum[0] + partsNum[1]) * (value < 0 ? -1 : 1);
             scale = partsNum[1].Length;
         }
 
@@ -92,6 +90,11 @@ namespace BigSingle.BigSingleLibrary
                 throw new ArgumentNullException("Value is null or empty");
 
             int dotPosition = value.IndexOfAny([',', '.']);
+
+            bool isNegative = value[0] == '-';
+
+            if(isNegative)
+                value = value.Substring(1);
 
 
             string intValue;
@@ -105,20 +108,20 @@ namespace BigSingle.BigSingleLibrary
             else
             {
                 intValue = value;
-                fracValue = "0";
+                fracValue = "";
             }
 
-            this.mDPD = EncodeDPD(intValue + fracValue);
-            this.scale = fracValue.Length;
+            this.value = BigInteger.Parse(intValue + fracValue) * (isNegative ? -1 : 1);
+            scale = fracValue.Length;
         }
 
         public BigFloat()
         {
-            mDPD = new BitArray(21, false);
+            value = 0;
         }
 
         //Метод для ограничивания BigFloat для привидения типа
-        /*private static T Clamp<T>(BigFloat value, T min, T max) where T : struct, IComparable
+        private static T Clamp<T>(BigFloat value, T min, T max) where T : struct, IComparable
         {
             //Получаем тип приведения
             Type typeOfT = typeof(T);
@@ -126,42 +129,42 @@ namespace BigSingle.BigSingleLibrary
             //Ограничиваем BigFloat, если он превышает лимиты, возвращаем максимум или минимум
             if (typeOfT != typeof(float) && typeOfT != typeof(double) && typeOfT != typeof(Int128) && typeOfT != typeof(UInt128))
             {
-                if (value.IntegerPart > new BigInteger(Convert.ToDecimal(max))) return max;
-                if (value.IntegerPart < new BigInteger(Convert.ToDecimal(min))) return min;
+                if (value.value > new BigInteger(Convert.ToDecimal(max))) return max;
+                if (value.value < new BigInteger(Convert.ToDecimal(min))) return min;
             }
             else if (typeOfT != typeof(Int128) && typeOfT != typeof(UInt128))
             {
-                if ((value.IntegerPart + 1) > new BigInteger(Convert.ToDouble(max))) return max;
-                if ((value.IntegerPart + 1) < new BigInteger(Convert.ToDouble(min))) return min;
+                if ((value.value + 1) > new BigInteger(Convert.ToDouble(max))) return max;
+                if ((value.value + 1) < new BigInteger(Convert.ToDouble(min))) return min;
             }
             else if (typeOfT == typeof(Int128))
             {
-                if ((value.IntegerPart + 1) > BigInteger.Parse(Int128.Parse(max.ToString()).ToString())) return max;
-                if ((value.IntegerPart + 1) < BigInteger.Parse(Int128.Parse(min.ToString()).ToString())) return min;
+                if ((value.value + 1) > BigInteger.Parse(Int128.Parse(max.ToString()).ToString())) return max;
+                if ((value.value + 1) < BigInteger.Parse(Int128.Parse(min.ToString()).ToString())) return min;
             }
             else if (typeOfT == typeof(UInt128))
             {
-                if ((value.IntegerPart + 1) > BigInteger.Parse(UInt128.Parse(max.ToString()).ToString())) return max;
-                if ((value.IntegerPart + 1) < BigInteger.Parse(UInt128.Parse(min.ToString()).ToString())) return min;
+                if ((value.value + 1) > BigInteger.Parse(UInt128.Parse(max.ToString()).ToString())) return max;
+                if ((value.value + 1) < BigInteger.Parse(UInt128.Parse(min.ToString()).ToString())) return min;
             }
 
 
             //Приведение типов для чисел с плавающей и фиксированных точек
             if (typeOfT == typeof(float))
-                return (T)(object)float.Parse((value.value[0] ? "-" : "") + value.ToString());
+                return (T)(object)float.Parse((value.value < 0 ? "-" : "") + value.ToString());
             if (typeOfT == typeof(double))
-                return (T)(object)double.Parse((value.value[0] ? "-" : "") + value.ToString());
+                return (T)(object)double.Parse((value.value < 0 ? "-" : "") + value.ToString());
             if (typeOfT == typeof(decimal))
-                return (T)(object)decimal.Parse((value.value[0] ? "-" : "") + value.ToString());
+                return (T)(object)decimal.Parse((value.value < 0 ? "-" : "") + value.ToString());
             if (typeOfT == typeof(Int128))
-                return (T)(object)Int128.Parse((value.value[0] ? "-" : "") + value.IntegerPart.ToString());
+                return (T)(object)Int128.Parse((value.value < 0 ? "-" : "") + value.ToString().Substring(0, value.ToString().IndexOf(',') - 1));
             if (typeOfT == typeof(UInt128))
-                return (T)(object)UInt128.Parse(value.IntegerPart.ToString());
+                return (T)(object)UInt128.Parse(value.value.ToString());
 
-            long a = long.Parse(value.IntegerPart.ToString());
+            long a = long.Parse(value.ToString().Substring(0, value.ToString().IndexOf(',') - 1));
 
 
             return (T)Convert.ChangeType(a, typeOfT);
-        }*/
+        }
     }
 }
