@@ -11,8 +11,44 @@ namespace BigSingle.BigSingleLibrary
         }
         public static bool operator <=(BigFloat left, BigFloat right) => left < right || left == right;
         public static bool operator >=(BigFloat left, BigFloat right) => left > right || left == right;
-        public static bool operator <(BigFloat left, BigFloat right) => left.value < right.value && left.scale <= right.scale;
-        public static bool operator >(BigFloat left, BigFloat right) => left.value > right.value && left.scale >= right.scale;
+        public static bool operator <(BigFloat left, BigFloat right)
+        {
+            BigInteger leftNum = left.value;
+            BigInteger rightNum = right.value;
+
+            int minScale = int.Min(left.scale, right.scale);
+            int maxScale = int.Max(left.scale, right.scale);
+
+            if (left.scale < right.scale)
+            {
+                leftNum *= BigInteger.Pow(10, maxScale - minScale);
+            }
+            else if (left.scale > right.scale)
+            {
+                rightNum *= BigInteger.Pow(10, maxScale - minScale);
+            }
+
+            return leftNum < rightNum;
+        }
+        public static bool operator >(BigFloat left, BigFloat right)
+        {
+            BigInteger leftNum = left.value;
+            BigInteger rightNum = right.value;
+
+            int minScale = int.Min(left.scale, right.scale);
+            int maxScale = int.Max(left.scale, right.scale);
+
+            if (left.scale < right.scale)
+            {
+                leftNum *= BigInteger.Pow(10, maxScale - minScale);
+            }
+            else if (left.scale > right.scale)
+            {
+                rightNum *= BigInteger.Pow(10, maxScale - minScale);
+            }
+
+            return leftNum > rightNum;
+        }
         public static BigFloat operator +(BigFloat left, BigFloat right)
         {
             BigInteger leftNum = left.value;

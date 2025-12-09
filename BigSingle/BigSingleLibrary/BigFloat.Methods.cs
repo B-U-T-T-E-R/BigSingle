@@ -33,6 +33,16 @@ namespace BigSingle.BigSingleLibrary
             scale = 0;
         }
 
+        public static BigFloat[] SetAccuracy(int acc, params BigFloat[] value)
+        {
+            for(int i = 0; i < value.Length; i++)
+            {
+                value[i].Accuracy = acc;
+            }
+
+            return value;
+        }
+
         public static BigFloat SetPrecision(BigFloat value, int precision)
         {
             if(precision < 0)

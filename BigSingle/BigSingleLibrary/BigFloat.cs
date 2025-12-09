@@ -70,6 +70,8 @@ namespace BigSingle.BigSingleLibrary
                     return "-Infinity";
             }
 
+            bool isNegative = false;
+
             string intPart = value.ToString()[..LengthIntegerPart];
             string fracPart = value.ToString()[LengthIntegerPart..];
 
@@ -82,6 +84,13 @@ namespace BigSingle.BigSingleLibrary
 
             fracPart = new string('0', scaleZero) + fracPart;
 
+            if(intPart.Contains('-') || fracPart.Contains('-'))
+            {
+                isNegative = true;
+                intPart = intPart.Trim('-');
+                fracPart = fracPart.Trim('-');
+            }
+
             if(fracPart.Length == 0)
                 fracPart = "0";
 
@@ -92,7 +101,7 @@ namespace BigSingle.BigSingleLibrary
             if (fracPart == "")
                 return intPart;
 
-            return $"{intPart},{fracPart}";
+            return $"{(isNegative ? "-" : "")}{(intPart.Length == 0 ? "0" : intPart)},{fracPart}";
         }
     }
 }

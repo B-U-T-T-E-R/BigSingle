@@ -91,10 +91,10 @@ namespace BigSingle.BigSingleLibrary
 
             int dotPosition = value.IndexOfAny([',', '.']);
 
-            bool isNegative = value[0] == '-';
+            bool isNegative = value.Contains('-');
 
-            if(isNegative)
-                value = value.Substring(1);
+            if (isNegative)
+                value = value.Replace("-", "");
 
 
             string intValue;
