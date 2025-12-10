@@ -15,6 +15,11 @@ namespace BigSingle.BigSingleLibrary
         public static readonly BigFloat E64 = new("2,7182818284590452353602874713526624977572470936999595749669676277");
         public static readonly BigFloat E128 = new("2,71828182845904523536028747135266249775724709369995957496696762772407663035354759457138217852516642742746639193200305992181741359");
         public static readonly BigFloat E1000 = new("2,7182818284590452353602874713526624977572470936999595749669676277240766303535475945713821785251664274274663919320030599218174135966290435729003342952605956307381323286279434907632338298807531952510190115738341879307021540891499348841675092447614606680822648001684774118537423454424371075390777449920695517027618386062613313845830007520449338265602976067371132007093287091274437470472306969772093101416928368190255151086574637721112523897844250569536967707854499699679468644549059879316368892300987931277361782154249992295763514822082698951936680331825288693984964651058209392398294887933203625094431173012381970684161403970198376793206832823764648042953118023287825098194558153017567173613320698112509961818815930416903515988885193458072738667385894228792284998920868058257492796104841984443634632449684875602336248270419786232090021609902353043699418491463140934317381436405462531520961836908887070167683964243781405927145635490613031072085103837505101157477041718986106873969655212671546889570350354");
+        public static readonly BigFloat Tau16 = PI16 * 2;
+        public static readonly BigFloat Tau32 = PI32 * 2;
+        public static readonly BigFloat Tau64 = PI64 * 2;
+        public static readonly BigFloat Tau128 = PI128 * 2;
+        public static readonly BigFloat Tau1000 = PI1000 * 2;
         public static BigFloat Abs(BigFloat value)
         {
             value.value *= (value.value < 0 ? -1 : 1);
@@ -45,15 +50,31 @@ namespace BigSingle.BigSingleLibrary
         public static int Sign(BigFloat value) => value.value >= 0 ? 0 : 1;
         public static BigFloat Truncate(BigFloat value) => $"{value.ToString().Substring(0, value.ToString().IndexOf(','))},{0}";
         public static BigFloat Clamp(BigFloat value, BigFloat min, BigFloat max) => value < min ? min : value > max ? max : value;
-        public static BigFloat Pow(BigFloat x, BigFloat y, int precision)
+        private static BigFloat Power(BigFloat x, BigFloat y, int precision)
         {
             return BigFloat.SetPrecision(Exp(y * Ln(x, precision), 20), precision);
+        }
+        public static BigFloat Pow(BigFloat a, BigFloat b, int precision)
+        {
+            int scale = 10;
+            BigFloat zn = Power(a, b, scale);
+            BigFloat x = b * Ln(a, precision) + 1;
+
+            for (int i = 0; i < 2; i++)
+            {
+                BigFloat zn1 = zn * (x - Ln(zn, precision));
+                zn = BigFloat.SetPrecision(zn1, scale);
+                Console.WriteLine(zn);
+                scale *= 2;
+            }
+
+            return zn;
         }
         public static BigFloat Sqrt(BigFloat x, BigFloat y, int precision)
         {
             return BigFloat.SetPrecision(Pow(x, 1 / y, precision), precision);
         }
-        private static BigInteger Factorial(BigInteger n)
+        private static BigFloat Factorial(BigInteger n)
         {
             if (n < 0) return -1;
             if (n == 0) return 1;
@@ -62,7 +83,7 @@ namespace BigSingle.BigSingleLibrary
             for (int i = 2; i <= n; i++)
                 result *= i;
 
-            return result;
+            return new BigFloat(result.ToString());
         }
         public static BigFloat Cos(BigFloat value, int precision)
         {
@@ -74,7 +95,7 @@ namespace BigSingle.BigSingleLibrary
 
             for (int i = 2; i < 100; i += 2)
             {
-                BigInteger fact_bi = Factorial((BigInteger)i);
+                BigInteger fact_bi = Factorial(i).value;
 
                 BigFloat factr = new BigFloat(fact_bi.ToString());
 
@@ -99,7 +120,7 @@ namespace BigSingle.BigSingleLibrary
 
             for (int i = 3; i < 100; i += 2)
             {
-                BigInteger fact_bi = Factorial((BigInteger)i);
+                BigInteger fact_bi = Factorial(i).value;
 
                 BigFloat factr = new BigFloat(fact_bi.ToString());
 
@@ -143,7 +164,6 @@ namespace BigSingle.BigSingleLibrary
 
             return result * k;
         }
-
         public static BigFloat Exp(BigFloat value, int iterations = 1000)
         {
             BigFloat result = BigFloat.One;
@@ -203,11 +223,40 @@ namespace BigSingle.BigSingleLibrary
 
             return BigFloat.SetPrecision(result * 2 + k * Ln2(precision), precision);
         }
-
-
         public static BigFloat Log(BigFloat baseLog, BigFloat value, int precision)
         {
             return BigFloat.SetPrecision(Ln(value, precision) / Ln(baseLog, precision), precision);
+        }
+        public static BigFloat CalculatePI(int precision)
+        {
+            BigFloat an = new ("1");
+            BigFloat bn = new BigFloat("1") / Sqrt(2, 2, precision);
+            BigFloat tn = new BigFloat("1") / new BigFloat("4");
+            BigFloat pn = new ("1");
+
+            Console.WriteLine("START.");
+            for(int i = 0; i < 25; i++)
+            {
+                BigFloat an1 = (an + bn) / 2;
+                Console.WriteLine("NEXT");
+                BigFloat bn1 = Sqrt(an * bn, 2, precision);
+                Console.WriteLine("NEXT");
+                BigFloat tn1 = tn - (pn * Pow(an - an1, 2, precision));
+                Console.WriteLine("NEXT");
+                BigFloat pn1 = 2 * pn;
+                Console.WriteLine("NEXT");
+
+                an = an1;
+                bn = bn1;
+                tn = tn1;
+                pn = pn1;
+
+                Console.WriteLine(i);
+                Console.WriteLine($"итого: {Pow(an + bn, 2, precision) / (4 * tn)}");
+            }
+            Console.WriteLine("END.");
+
+            return Pow(an + bn, 2, precision) / (4 * tn);
         }
     }
 }
